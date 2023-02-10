@@ -9,18 +9,29 @@ function Invoke-AdxCmd {
 
 .LINK
     https://learn.microsoft.com/en-us/azure/data-explorer/kusto/api/powershell/powershell
+
+.PARAMETER ClusterUrl
+    URL/URI you get back from `Get-AzKustoCluster | Select Uri`. Should include the `;Fed=True` suffix
+
+.PARAMETER DatabaseName
+    May be blank. Establishes the connection context to the database if it exists. 
+
+.PARAMETER Command
+    The KQL string to execute
+
 #>
     [CmdletBinding()]
     param (
-        [Parameter()]
+        [Parameter(Mandatory)]
+        [ValidateScript({$_.EndsWith(';Fed=True')})]
         [string]
-        $clusterUrl,
+        $ClusterUrl,
 
         [Parameter()]
         [string]
-        $databaseName,
+        $DatabaseName,
 
-        [Parameter()]
+        [Parameter(Mandatory)]
         [Alias('Query')]
         [string]
         $Command
