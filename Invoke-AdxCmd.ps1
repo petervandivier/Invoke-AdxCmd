@@ -12,6 +12,7 @@ function Invoke-AdxCmd {
 
 .PARAMETER ClusterUrl
     URL/URI you get back from `Get-AzKustoCluster | Select Uri`. Should include the `;Fed=True` suffix
+    See also: https://learn.microsoft.com/en-us/azure/data-explorer/kusto/api/connection-strings/kusto
 
 .PARAMETER DatabaseName
     May be blank. Establishes the connection context to the database if it exists. 
