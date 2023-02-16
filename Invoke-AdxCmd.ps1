@@ -48,7 +48,14 @@ function Invoke-AdxCmd {
 
     $crp.SetOption([Kusto.Data.Common.ClientRequestProperties]::OptionServerTimeout, [TimeSpan]::FromSeconds(30))
 
-    $reader = $queryProvider.ExecuteQuery($Command, $crp)
+    $isControlCmd = ('.' -eq ([char[]]($Command -replace "[\s\n\r]"))[0])
+
+    $reader = if($isControlCmd){
+        # n.b. `.show` may submit as either a control command or a query 
+        $queryProvider.ExecuteControlCommand($Command, $crp)
+    } else {
+        $queryProvider.ExecuteQuery($Command, $crp)
+    } 
 
     $dataTable = [Kusto.Cloud.Platform.Data.ExtendedDataReader]::ToDataSet($reader).Tables[0]
 
