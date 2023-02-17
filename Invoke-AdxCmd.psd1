@@ -1,9 +1,12 @@
 @{
     RootModule = 'Invoke-AdxCmd.psm1'
-    ModuleVersion = '0.0.4'
+    ModuleVersion = '0.0.5'
     Author = 'Peter Vandivier'
     FunctionsToExport = @(
         'Invoke-AdxCmd'
+        # 
+        'Deploy-AdxObject'
+        'Export-AdxTableData'
         'Format-KqlParameters'
         'New-KqlWithClause'
     )

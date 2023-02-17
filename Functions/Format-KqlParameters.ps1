@@ -1,4 +1,4 @@
-function Format-Parameters {
+function Format-KqlParameters {
     Param(
         [string]$Parameters
     )

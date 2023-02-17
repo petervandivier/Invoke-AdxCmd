@@ -1,4 +1,4 @@
-function New-WithClause {
+function New-KqlWithClause {
     Param(
         [string]$Folder,
         [string]$DocString
