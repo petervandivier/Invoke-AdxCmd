@@ -10,6 +10,7 @@ function New-KqlWithClause {
         $DocString = "docstring = '$($DocString.Replace("'","''"))'"
     }
     if($Folder -or $DocString){
-        "with (`n    $($Folder,$DocString -join ",`n    ")`n)"
+        $clause = ($Folder,$DocString | Where-Object {$_})  -join ",`n    "
+        "with (`n    $clause`n)"
     }
 }
