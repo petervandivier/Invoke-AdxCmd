@@ -14,7 +14,7 @@ function Export-AdxDatabaseSchema {
     $dbTables = Invoke-AdxCmd -Query '.show database cslschema'  -ClusterUrl $ClusterUrl -DatabaseName $DatabaseName
 
     $dbTables | ForEach-Object {
-        $createCmd = ConvertTo-AdxCreateTableCommand $_
+        $createCmd = ConvertTo-AdxCreateTableCmd $_
         $_ | Add-Member -MemberType NoteProperty -Name CreateCmd -Value $createCmd
         $Directory = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
         $createCmd | Set-Content "$Directory/$($_.TableName).kql"
@@ -23,7 +23,7 @@ function Export-AdxDatabaseSchema {
     $dbFunctions = Invoke-AdxCmd -Query '.show functions' -ClusterUrl $ClusterUrl -DatabaseName $DatabaseName
 
     $dbFunctions | ForEach-Object {
-        $createCmd = ConvertTo-AdxCreateTableCmd $_
+        $createCmd = ConvertTo-AdxCreateFunctionCmd $_
         $_ | Add-Member -MemberType NoteProperty -Name CreateCmd -Value $createCmd
         $Directory = New-Item -ItemType Directory -Path "Functions/$($_.Folder)" -Force
         $createCmd | Set-Content "$Directory/$($_.Name).kql"
