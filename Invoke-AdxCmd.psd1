@@ -1,11 +1,12 @@
 @{
     RootModule = 'Invoke-AdxCmd.psm1'
-    ModuleVersion = '0.0.7'
+    ModuleVersion = '0.0.8'
     Author = 'Peter Vandivier'
     FunctionsToExport = @(
         'Invoke-AdxCmd'
         # 
         'ConvertTo-AdxCreateFunctionCmd'
+        'ConvertTo-AdxCreateMaterializedViewCmd'
         'ConvertTo-AdxCreateTableCmd'
         'Deploy-AdxObject'
         'Export-AdxDatabaseSchema'
