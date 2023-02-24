@@ -4,16 +4,16 @@ function ConvertTo-AdxCreateTableCmd {
     param (
         [Parameter(ValueFromPipeline)]
         [AdxTableCslSchemaDatarow]
-        $TableCslSchemaDataRow
+        $CslSchemaDataRow
     )
-    $createTblStub = ".create-merge table {TableName} (`n{ColumnList}`n) {WithClause}"
+    $createStub = ".create-merge table {TableName} (`n{ColumnList}`n) {WithClause}"
 
-    $WithClause = New-KqlWithClause $TableCslSchemaDataRow.Folder $TableCslSchemaDataRow.DocString
-    $ColumnList = ($TableCslSchemaDataRow.Schema.Split(',') | ForEach-Object {
+    $WithClause = New-KqlWithClause $CslSchemaDataRow.Folder $CslSchemaDataRow.DocString
+    $ColumnList = ($CslSchemaDataRow.Schema.Split(',') | ForEach-Object {
         "    $($_.Replace(':', ': '))"
     }) -join ",$([Environment]::NewLine)"
-    $createCmd = $createTblStub.Replace(
-        '{TableName}', $TableCslSchemaDataRow.TableName
+    $createCmd = $createStub.Replace(
+        '{TableName}', $CslSchemaDataRow.TableName
     ).Replace(
         '{ColumnList}', $ColumnList
     ).Replace(

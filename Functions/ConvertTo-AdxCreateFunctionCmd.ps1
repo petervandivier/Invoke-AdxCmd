@@ -4,20 +4,20 @@ function ConvertTo-AdxCreateFunctionCmd {
     param (
         [Parameter(ValueFromPipeline)]
         [AdxFunctionCslSchemaDataRow]
-        $TableCslSchemaDataRow
+        $CslSchemaDataRow
     )
-    $createFuncStub = ".create-or-alter function {WithClause} {Name} {Parameters} {Body}"
+    $createStub = ".create-or-alter function {WithClause} {Name} {Parameters} {Body}"
 
-    $WithClause = New-KqlWithClause $TableCslSchemaDataRow.Folder $TableCslSchemaDataRow.DocString
-    $Parameters = Format-KqlParameters $TableCslSchemaDataRow.Parameters
-    $createCmd = $createFuncStub.Replace( 
+    $WithClause = New-KqlWithClause $CslSchemaDataRow.Folder $CslSchemaDataRow.DocString
+    $Parameters = Format-KqlParameters $CslSchemaDataRow.Parameters
+    $createCmd = $createStub.Replace( 
         '{WithClause}', $WithClause
     ).Replace( 
-        '{Name}', $TableCslSchemaDataRow.Name
+        '{Name}', $CslSchemaDataRow.Name
     ).Replace(
         '{Parameters}', $Parameters
     ).Replace(
-        '{Body}', $TableCslSchemaDataRow.Body
+        '{Body}', $CslSchemaDataRow.Body
     )
 
     return $createCmd
