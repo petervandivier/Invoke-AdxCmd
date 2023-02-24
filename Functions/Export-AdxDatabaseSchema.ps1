@@ -21,13 +21,13 @@ function Export-AdxDatabaseSchema {
         ConvertTo-AdxCreateTableCmd $_ | Set-Content "$Directory/$($_.TableName).kql"
     }
 
-    Invoke-AdxCmd -Query '.show functions' @Connection| ForEach-Object {
+    Invoke-AdxCmd -Query '.show functions' @Connection | ForEach-Object {
         $Directory = New-Item -ItemType Directory -Path "Functions/$($_.Folder)" -Force
         ConvertTo-AdxCreateFunctionCmd $_ | Set-Content "$Directory/$($_.Name).kql"
     }
 
     Invoke-AdxCmd -Query '.show materialized-views' @Connection | ForEach-Object {
         $Directory = New-Item -ItemType Directory -Path "MaterializedViews/$($_.Folder)" -Force
-        ConvertTo-AdxCreateFunctionCmd $_ | Set-Content "$Directory/$($_.Name).kql"
+        ConvertTo-AdxCreateMaterializedViewCmd $_ | Set-Content "$Directory/$($_.Name).kql"
     }
 }

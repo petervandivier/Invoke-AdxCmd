@@ -4,6 +4,12 @@
     Output of `.show materialized-views` command
 .LINK
     https://learn.microsoft.com/en-us/azure/data-explorer/kusto/management/materialized-views/materialized-view-show-commands
+.PARAMETER Lookback
+    Lookback type cannot be declared since ADX allows for nullable [timespan] while PowerShell does not
+.LINK
+    https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/scalar-data-types/timespan
+.LINK
+    https://www.softwarepronto.com/2021/07/powershell-nullable-types.html
 #>
 class AdxMaterializedViewCslSchemaDataRow {
     [ValidateNotNullOrEmpty()][string]$Name
@@ -18,7 +24,7 @@ class AdxMaterializedViewCslSchemaDataRow {
     [string]$DocString
     [bool]$AutoUpdateSchema
     [datetime]$EffectiveDateTime
-    [timespan]$Lookback
+    $Lookback
     AdxMaterializedViewCslSchemaDataRow([System.Data.DataRowView]$DataRow){
         $this.Name              = $DataRow.Name
         $this.SourceTable       = $DataRow.SourceTable
@@ -32,6 +38,6 @@ class AdxMaterializedViewCslSchemaDataRow {
         $this.DocString         = $DataRow.DocString
         $this.AutoUpdateSchema  = $DataRow.AutoUpdateSchema
         $this.EffectiveDateTime = $DataRow.EffectiveDateTime
-        $this.Lookback          = $DataRow.Lookback
+        $this.Lookback          = if($DataRow.Lookback -is [System.DBNull]){$null}else{[timespan]($DataRow.Lookback)}
     }
 }

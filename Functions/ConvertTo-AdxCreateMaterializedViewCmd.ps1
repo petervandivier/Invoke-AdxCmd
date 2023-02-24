@@ -6,9 +6,12 @@ function ConvertTo-AdxCreateMaterializedViewCmd {
         [AdxMaterializedViewCslSchemaDataRow]
         $CslSchemaDataRow
     )
-    $createStub = ".create-or-alter materialized-view {Name} `n    on table {SourceTable} {`n{Query}`n}"
+    $createStub = ".create-or-alter materialized-view {WithClause} {Name} `n    on table {SourceTable} {`n{Query}`n}"
 
+    $WithClause = New-KqlWithClause $CslSchemaDataRow.Folder $CslSchemaDataRow.DocString $CslSchemaDataRow.Lookback
     $createCmd = $createStub.Replace( 
+        '{WithClause}', $WithClause
+    ).Replace( 
         '{Name}', $CslSchemaDataRow.Name
     ).Replace(
         '{SourceTable}', $CslSchemaDataRow.SourceTable
