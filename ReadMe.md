@@ -10,6 +10,6 @@ If you're on this page, you probably already know what KQL & ADX are, but so we'
 
 ## KQL
 
-[Kusto Query Language](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/) is the syntax you use for interacting with ADX & Log Analytics. 
+[Kusto Query Language](https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/) is the syntax you use for interacting with ADX, [Log Analytics](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/log-analytics-overview), and [Azure Resource Graph](https://learn.microsoft.com/en-us/azure/governance/resource-graph/overview) Explorer <sub>[`Search-AzGraph`](https://learn.microsoft.com/en-us/powershell/module/az.resourcegraph/search-azgraph)</sub>. 
 
 Also sometimes abbreviated as CSL. This stands for "Costeau Semantic Language" and was the internal project name at Microsoft before general availability (sadly I have only [informal citations for this](https://twitter.com/TechTrainerTim/status/1534521353503637504)). 
