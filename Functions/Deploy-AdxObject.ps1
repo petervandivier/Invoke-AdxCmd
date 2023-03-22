@@ -18,6 +18,7 @@ function Deploy-AdxObject {
 
     $Command = Get-Content $FilePath -Raw
 
+    # also matches `.create-merge`, `.create-or-alter`, etc...
     $FirstControlWord = ([char[]]($Command -replace "[\s\n\r]"))[0 .. 6] -join ''
 
     if('.create' -eq $FirstControlWord){
