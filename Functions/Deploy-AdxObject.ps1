@@ -13,12 +13,23 @@ function Deploy-AdxObject {
 
         [Parameter(Mandatory)]
         [string]
-        $DatabaseName
+        $DatabaseName,
+
+        [Parameter()]
+        [switch]
+        $ContinueOnErrors
     )
 
     $Command = Get-Content $FilePath -Raw
 
+    # also matches `.create-merge`, `.create-or-alter`, etc...
     $FirstControlWord = ([char[]]($Command -replace "[\s\n\r]"))[0 .. 6] -join ''
+
+    $IsMultiBatch = $Command -match '\r\n\r\n'
+    if($IsMultiBatch){
+        Write-Verbose "More than one batch detected in deployment script. Commands will be wrapped in an `.execute` block."
+        $Command = ".execute database script with (ContinueOnErrors=$ContinueOnErrors) <| `n$Command"
+    }
 
     if('.create' -eq $FirstControlWord){
         Invoke-AdxCmd -ClusterUrl $ClusterUrl -DatabaseName $DatabaseName -Command $Command

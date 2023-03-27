@@ -1,6 +1,6 @@
 @{
     RootModule = 'Invoke-AdxCmd.psm1'
-    ModuleVersion = '0.0.8'
+    ModuleVersion = '0.0.9'
     Author = 'Peter Vandivier'
     FunctionsToExport = @(
         'Invoke-AdxCmd'
