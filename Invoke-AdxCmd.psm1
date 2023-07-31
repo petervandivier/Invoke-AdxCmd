@@ -18,4 +18,11 @@ Get-ChildItem Functions -Filter *.ps1 | ForEach-Object {
     Export-ModuleMember $_.BaseName
 }
 
+Import-Csv "Assets/KqlKeywords.csv"
+| Where-Object IsReserved -eq 'TRUE'
+| Select-Object -ExpandProperty Word
+| Set-Variable -Name KqlReservedKeywords -Option ReadOnly -Force
+
+Export-ModuleMember -Variable KqlReservedKeywords
+
 Pop-Location

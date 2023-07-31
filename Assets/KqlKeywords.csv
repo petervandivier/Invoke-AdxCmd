@@ -1,0 +1,7 @@
+Word,IsReserved,IsTested,SourceId,SourceSlug,Comments
+in,false,true,1,scalar-data-types/dynamic,
+value,false,true,1,scalar-data-types/dynamic,
+array,false,true,1,scalar-data-types/dynamic,
+array_length,false,true,1,scalar-data-types/dynamic,
+where,false,true,1,scalar-data-types/dynamic,Noted as a keyword but testing reveals it is a valid EntityName
+take,false,true,,,

@@ -1,6 +1,6 @@
 @{
     RootModule = 'Invoke-AdxCmd.psm1'
-    ModuleVersion = '0.0.9'
+    ModuleVersion = '0.0.10'
     Author = 'Peter Vandivier'
     FunctionsToExport = @(
         'Invoke-AdxCmd'
@@ -11,8 +11,13 @@
         'Deploy-AdxObject'
         'Export-AdxDatabaseSchema'
         'Export-AdxTableData'
+        'Format-KqlIdentifier'
         'Format-KqlParameters'
         'New-KqlWithClause'
+        'Test-KqlKeyword'
+    )
+    VariablesToExport = @(
+        'KqlReservedKeywords'
     )
     Guid = '688fd570-0253-491b-beff-385ecc05cef2'
 }

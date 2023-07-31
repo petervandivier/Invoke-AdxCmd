@@ -16,9 +16,17 @@ function Export-AdxDatabaseSchema {
         DatabaseName = $DatabaseName
     }
 
+    $DatabasePolicies = Invoke-AdxCmd -Query '.show database policies' @Connection
+    $TablesDetails = Invoke-AdxCmd -Query '.show tables details' @Connection
+
     Invoke-AdxCmd -Query '.show database cslschema' @Connection | ForEach-Object {
         $Directory = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
-        ConvertTo-AdxCreateTableCmd $_ | Set-Content "$Directory/$($_.TableName).kql"
+        $TableName = $_.TableName
+        $CreateCmd = ConvertTo-AdxCreateTableCmd `
+            -CslSchemaDataRow $_ `
+            -TablesDetails ($TablesDetails | Where-Object TableName -eq $TableName) `
+            -DatabasePolicies $DatabasePolicies
+        $CreateCmd | Set-Content "${Directory}/${TableName}.kql"
     }
 
     Invoke-AdxCmd -Query '.show functions' @Connection | ForEach-Object {
