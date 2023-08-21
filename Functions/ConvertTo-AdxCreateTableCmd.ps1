@@ -36,13 +36,20 @@ function ConvertTo-AdxCreateTableCmd {
             Mandatory,
             ParameterSetName='Policies'
         )]
-        $TablesDetails,
+        $TablePolicy,
 
         [Parameter(
             Mandatory,
             ParameterSetName='Policies'
         )]
-        $DatabasePolicies
+        $DatabasePolicy,
+
+        [Parameter(
+            Mandatory,
+            ParameterSetName='Policies'
+        )]
+        [AllowNull()]
+        $UpdatePolicy
     )
     $createStub = ".create-merge table {TableName} (`n{ColumnList}`n) {WithClause}"
     $TableName = $CslSchemaDataRow.TableName | Format-KqlIdentifier
@@ -60,17 +67,18 @@ function ConvertTo-AdxCreateTableCmd {
     )
 
     if($PsCmdlet.ParameterSetName -eq 'Policies'){
-        $DatabaseCachingPolicy = $DatabasePolicies.CachingPolicy | ConvertFrom-Json
-        $TablesCachingPolicy = $TablesDetails.CachingPolicy | ConvertFrom-Json
+#region cache
+        $DatabaseCachingPolicy = $DatabasePolicy.CachingPolicy | ConvertFrom-Json
+        $TablesCachingPolicy = $TablePolicy.CachingPolicy | ConvertFrom-Json
         if(
             ($DatabaseCachingPolicy.DataHotSpan.Value -ne $TablesCachingPolicy.DataHotSpan) -or
             ($DatabaseCachingPolicy.IndexHotSpan.Value -ne $TablesCachingPolicy.IndexHotSpan)
         ){
             # https://learn.microsoft.com/en-us/azure/data-explorer/kusto/management/alter-table-cache-policy-command
             if($TablesCachingPolicy.DataHotSpan -eq $TablesCachingPolicy.IndexHotSpan){
-                $CachingPolicy = ".alter table $TableName policy caching hot = timespan($($TablesCachingPolicy.DataHotSpan))"
+                $CachingPolicyCmd = ".alter table $TableName policy caching hot = timespan($($TablesCachingPolicy.DataHotSpan))"
             } else {
-                $CachingPolicy = @(
+                $CachingPolicyCmd = @(
                     ".alter table $TableName policy caching"
                     "    hotdata = timespan($($TablesCachingPolicy.DataHotSpan))"
                     "    hotindex = timespan($($TablesCachingPolicy.IndexHotSpan))"
@@ -78,17 +86,19 @@ function ConvertTo-AdxCreateTableCmd {
             }
 
             $createCmd += [Environment]::NewLine * 2
-            $createCmd += $CachingPolicy
+            $createCmd += $CachingPolicyCmd
         }
+#endregion cache
 
-        $DatabaseRetentionPolicy = $DatabasePolicies.RetentionPolicy | ConvertFrom-Json
-        $TablesRetentionPolicy =  $TablesDetails.RetentionPolicy | ConvertFrom-Json
+#region retention
+        $DatabaseRetentionPolicy = $DatabasePolicy.RetentionPolicy | ConvertFrom-Json
+        $TablesRetentionPolicy =  $TablePolicy.RetentionPolicy | ConvertFrom-Json
         if(
             ($DatabaseRetentionPolicy.SoftDeletePeriod -ne $TablesRetentionPolicy.SoftDeletePeriod) -or
             ($DatabaseRetentionPolicy.Recoverability -ne $TablesRetentionPolicy.Recoverability)
         ){
             # https://learn.microsoft.com/en-us/azure/data-explorer/kusto/management/alter-table-retention-policy-command
-            $RetentionPolicy = @(
+            $RetentionPolicyCmd = @(
                 ".alter table $TableName policy retention"
                 '```'
                 [PsCustomObject]@{
@@ -99,8 +109,29 @@ function ConvertTo-AdxCreateTableCmd {
             ) -join [Environment]::NewLine 
 
             $createCmd += [Environment]::NewLine * 2
-            $createCmd += $RetentionPolicy
+            $createCmd += $RetentionPolicyCmd
         }
+#endregion retention
+
+#region update
+        if($null -ne $UpdatePolicy){
+            $UpdatePolicyCmd = @(
+                ".alter table $TableName policy update"
+                '```'
+                [PsCustomObject]@{
+                    IsEnabled       = $UpdatePolicy.SoftDeletePeriod
+                    Source          = $UpdatePolicy.Source
+                    Query           = $UpdatePolicy.Query
+                    IsTransactional = $UpdatePolicy.IsTransactional
+                    PropagateIngestionProperties = $UpdatePolicy.PropagateIngestionProperties
+                } | ConvertTo-Json
+                '```'
+            ) -join [Environment]::NewLine 
+
+            $createCmd += [Environment]::NewLine * 2
+            $createCmd += $UpdatePolicyCmd
+        }
+#endregion update
     }
 
     return $createCmd

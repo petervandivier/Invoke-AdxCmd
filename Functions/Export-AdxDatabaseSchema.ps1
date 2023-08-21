@@ -16,16 +16,39 @@ function Export-AdxDatabaseSchema {
         DatabaseName = $DatabaseName
     }
 
-    $DatabasePolicies = Invoke-AdxCmd -Query '.show database policies' @Connection
+    $UpdatePoliciesQuery = @(
+        '.show table * policy update'
+        '| extend '
+        '    parse_json(ChildEntities),'
+        '    split(EntityName,@".")'
+        '| extend '
+        '    TargetDatabase = trim(@"[^\w]+",tostring(EntityName[0])),'
+        '    TargetTable = trim(@"[^\w]+",tostring(EntityName[1]))'
+        '| mv-expand parse_json(Policy)'
+        '| extend '
+        '    IsEnabled                    = tobool(Policy.IsEnabled),'
+        '    Source                       = tostring(Policy.Source),'
+        '    Query                        = tostring(Policy.Query),'
+        '    IsTransactional              = tobool(Policy.IsTransactional),'
+        '    PropagateIngestionProperties = tobool(Policy.PropagateIngestionProperties),'
+        '    ManagedIdentity              = tostring(Policy.ManagedIdentity)'
+        '| project-away Policy'
+    ) -join "`n"
+
+    $UpdatePolicies = Invoke-AdxCmd -Query $UpdatePoliciesQuery @Connection
+    $DatabasePolicy = Invoke-AdxCmd -Query '.show database policies' @Connection
     $TablesDetails = Invoke-AdxCmd -Query '.show tables details' @Connection
 
     Invoke-AdxCmd -Query '.show database cslschema' @Connection | ForEach-Object {
         $Directory = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
         $TableName = $_.TableName
+        $TablePolicy = $TablesDetails | Where-Object TableName -eq $TableName
+        $UpdatePolicy = $UpdatePolicies | Where-Object TargetTable -eq $TableName
         $CreateCmd = ConvertTo-AdxCreateTableCmd `
             -CslSchemaDataRow $_ `
-            -TablesDetails ($TablesDetails | Where-Object TableName -eq $TableName) `
-            -DatabasePolicies $DatabasePolicies
+            -TablePolicy $TablePolicy `
+            -DatabasePolicy $DatabasePolicy `
+            -UpdatePolicy $UpdatePolicy
         $CreateCmd | Set-Content "${Directory}/${TableName}.kql"
     }
 
