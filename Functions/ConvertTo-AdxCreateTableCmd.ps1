@@ -20,6 +20,7 @@ function ConvertTo-AdxCreateTableCmd {
     [CmdletBinding(DefaultParameterSetName='Schema')]
     param (
         [Parameter(
+            Position = 0,
             ValueFromPipeline,
             Mandatory,
             ParameterSetName='Schema'
