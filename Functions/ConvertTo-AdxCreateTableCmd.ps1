@@ -120,11 +120,11 @@ function ConvertTo-AdxCreateTableCmd {
                 ".alter table $TableName policy update"
                 '```'
                 [PsCustomObject]@{
-                    IsEnabled       = $UpdatePolicy.SoftDeletePeriod
+                    IsEnabled       = [bool]($UpdatePolicy.IsEnabled)
                     Source          = $UpdatePolicy.Source
                     Query           = $UpdatePolicy.Query
-                    IsTransactional = $UpdatePolicy.IsTransactional
-                    PropagateIngestionProperties = $UpdatePolicy.PropagateIngestionProperties
+                    IsTransactional = [bool]($UpdatePolicy.IsTransactional)
+                    PropagateIngestionProperties = [bool]($UpdatePolicy.PropagateIngestionProperties)
                 } | ConvertTo-Json
                 '```'
             ) -join [Environment]::NewLine 
