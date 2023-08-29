@@ -124,16 +124,17 @@ function ConvertTo-AdxCreateTableCmd {
 
 #region update
         if($null -ne $UpdatePolicy){
+            $UpdatePolicyJson = ConvertTo-Json -InputObject ([array][PsCustomObject]@{
+                IsEnabled       = [bool]($UpdatePolicy.IsEnabled)
+                Source          = $UpdatePolicy.Source
+                Query           = $UpdatePolicy.Query
+                IsTransactional = [bool]($UpdatePolicy.IsTransactional)
+                PropagateIngestionProperties = [bool]($UpdatePolicy.PropagateIngestionProperties)
+            })
             $UpdatePolicyCmd = @(
                 ".alter table $TableName policy update"
                 '```'
-                [PsCustomObject]@{
-                    IsEnabled       = [bool]($UpdatePolicy.IsEnabled)
-                    Source          = $UpdatePolicy.Source
-                    Query           = $UpdatePolicy.Query
-                    IsTransactional = [bool]($UpdatePolicy.IsTransactional)
-                    PropagateIngestionProperties = [bool]($UpdatePolicy.PropagateIngestionProperties)
-                } | ConvertTo-Json
+                $UpdatePolicyJson
                 '```'
             ) -join [Environment]::NewLine 
 
