@@ -50,7 +50,15 @@ function ConvertTo-AdxCreateTableCmd {
             ParameterSetName='Policies'
         )]
         [AllowNull()]
-        $UpdatePolicy
+        $UpdatePolicy,
+
+        [Parameter(
+            Mandatory,
+            ParameterSetName='Policies'
+        )]
+        [Alias('RlsPolicy')]
+        [AllowNull()]
+        $RowLevelSecurityPolicy
     )
     $createStub = ".create-merge table {TableName} (`n{ColumnList}`n) {WithClause}"
     $TableName = $CslSchemaDataRow.TableName | Format-KqlIdentifier
@@ -133,6 +141,18 @@ function ConvertTo-AdxCreateTableCmd {
             $createCmd += $UpdatePolicyCmd
         }
 #endregion update
+
+#region row_level_security
+if($null -ne $RowLevelSecurityPolicy){
+    if($RowLevelSecurityPolicy.IsEnabled){
+        $RlsQuery = "$($RowLevelSecurityPolicy.Query)".Trim()
+        $RowLevelSecurityPolicyCmd = ".alter table $TableName policy row_level_security enable `"$RlsQuery`""
+
+        $createCmd += [Environment]::NewLine * 2
+        $createCmd += $RowLevelSecurityPolicyCmd
+    }
+}
+#endregion row_level_security
     }
 
     return $createCmd

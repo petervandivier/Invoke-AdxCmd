@@ -16,8 +16,7 @@ function Export-AdxDatabaseSchema {
         DatabaseName = $DatabaseName
     }
 
-    $UpdatePoliciesQuery = @(
-        '.show table * policy update'
+    $PolicyParser = @(
         '| extend '
         '    parse_json(ChildEntities),'
         '    split(EntityName,@".")'
@@ -33,22 +32,37 @@ function Export-AdxDatabaseSchema {
         '    PropagateIngestionProperties = tobool(Policy.PropagateIngestionProperties),'
         '    ManagedIdentity              = tostring(Policy.ManagedIdentity)'
         '| project-away Policy'
+    ) 
+
+    $UpdatePoliciesQuery = @(
+        '.show table * policy update'
+        $PolicyParser
     ) -join "`n"
 
+    $RowLevelSecurityPoliciesQuery = @(
+        '.show table * policy row_level_security'
+        $PolicyParser
+    ) -join "`n"
+
+    $RlsPolicies = Invoke-AdxCmd -Query $RowLevelSecurityPoliciesQuery @Connection
     $UpdatePolicies = Invoke-AdxCmd -Query $UpdatePoliciesQuery @Connection
     $DatabasePolicy = Invoke-AdxCmd -Query '.show database policies' @Connection
     $TablesDetails = Invoke-AdxCmd -Query '.show tables details' @Connection
 
     Invoke-AdxCmd -Query '.show database cslschema' @Connection | ForEach-Object {
-        $Directory = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
-        $TableName = $_.TableName
-        $TablePolicy = $TablesDetails | Where-Object TableName -eq $TableName
+        $Directory    = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
+        $TableName    = $_.TableName
+        $TablePolicy  = $TablesDetails | Where-Object TableName -eq $TableName
         $UpdatePolicy = $UpdatePolicies | Where-Object TargetTable -eq $TableName
-        $CreateCmd = ConvertTo-AdxCreateTableCmd `
-            -CslSchemaDataRow $_ `
-            -TablePolicy $TablePolicy `
-            -DatabasePolicy $DatabasePolicy `
-            -UpdatePolicy $UpdatePolicy
+        $RlsPolicy    = $RlsPolicies | Where-Object TargetTable -eq $TableName
+        $GetTableDdlSplat = @{
+            CslSchemaDataRow = $_
+            TablePolicy      = $TablePolicy
+            DatabasePolicy   = $DatabasePolicy
+            UpdatePolicy     = $UpdatePolicy
+            RlsPolicy        = $RlsPolicy
+        }
+        $CreateCmd = ConvertTo-AdxCreateTableCmd @GetTableDdlSplat
         $CreateCmd | Set-Content "${Directory}/${TableName}.kql"
     }
 
