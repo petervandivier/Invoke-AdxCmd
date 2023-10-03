@@ -1,3 +1,4 @@
+#Requires -PsEdition Core
 
 Push-Location $PsScriptRoot
 
