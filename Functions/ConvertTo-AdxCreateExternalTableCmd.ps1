@@ -34,7 +34,9 @@ function ConvertTo-AdxCreateExternalTableCmd {
         'with ('
     ) -join "`n"
 
-    if($CreateTableCmd -match '(?m)^\) with \($'){
+    [bool]$HasWithClause = $CreateTableCmd -match '(?m)^\) with \($'
+
+    if($HasWithClause){
         $CreateTableCmd = $CreateTableCmd.Replace(
             ') with (', 
             $ExternalTablePlaceholder
@@ -52,12 +54,12 @@ function ConvertTo-AdxCreateExternalTableCmd {
     }
 
     $ExternalTableDetails = ""
-    $ExternalTableDetails += "kind = $($ExternalTableDataRow.TableType)`n"
+    $ExternalTableDetails += "kind = $($ExternalTableDataRow.TableType.ToLower())`n"
     if(-not [string]::IsNullOrWhiteSpace($PartitionByClause)){
         $ExternalTableDetails += "partition by ($PartitionByClause)`n"
     }
     if(-not [string]::IsNullOrWhiteSpace($ExternalTableDataRow.PathFormat)){
-        $ExternalTableDetails += "pathformat = $($ExternalTableDataRow.PathFormat)`n"
+        $ExternalTableDetails += "pathformat = ($($ExternalTableDataRow.PathFormat))`n"
     }
     $ExternalTableDetails += "dataformat = $($ExternalTableDataRow.Properties.Format.ToLower())`n"
     $ExternalTableDetails += "(`n"
@@ -68,6 +70,17 @@ function ConvertTo-AdxCreateExternalTableCmd {
         '{ExternalTablePlaceholder}',
         $ExternalTableDetails
     )
+
+    if($ExternalTableDataRow.Properties.Compressed){
+        if($HasWithClause){
+            $CreateTableCmd = $CreateTableCmd.Replace(
+                'with (',
+                "with (`n    compressed = true,"
+            )
+        } else {
+            $CreateTableCmd += "with ( compressed = true )"
+        }
+    }
 
     return $CreateTableCmd
 }
