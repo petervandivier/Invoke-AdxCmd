@@ -34,7 +34,7 @@ class AdxExternalTableDataRow {
         $this.DocString         = $DataRow.DocString
         $this.Properties        = $DataRow.Properties | ConvertFrom-Json
         $this.ConnectionStrings = [string[]]($DataRow.ConnectionStrings | ConvertFrom-Json)
-        $this.Partitions        = [string[]]($DataRow.Partitions | ConvertFrom-Json)
+        $this.Partitions        = $DataRow.Partitions | ConvertFrom-Json
         $this.PathFormat        = $DataRow.PathFormat
         $this.Catalog           = $DataRow.Catalog
     }
