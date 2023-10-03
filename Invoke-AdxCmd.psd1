@@ -5,6 +5,7 @@
     FunctionsToExport = @(
         'Invoke-AdxCmd'
         # 
+        'ConvertTo-AdxCreateExternalTableCmd'
         'ConvertTo-AdxCreateFunctionCmd'
         'ConvertTo-AdxCreateMaterializedViewCmd'
         'ConvertTo-AdxCreateTableCmd'
