@@ -1,5 +1,26 @@
 
 function Export-AdxDatabaseSchema {
+<#
+.Synopsis
+    `pg_dump --schema-only` for Azure Data Explorer.
+
+.Description
+    Given a cluster URL & Database name (and sufficient permissions for the running user),
+    extracts most objects in a database and exports them to discrete .KQL scripts in a 
+    directory tree relative to your current working directory.
+
+    Currently supported object types:
+        - Tables
+            - Row Level Security Policy
+            - Update Policy
+            - Retention Policy
+            - Caching Policy
+        - Functions
+        - Materialized Views
+
+    Currently unsupported types:
+        - External Tables
+#>
     param (
         [Parameter(Mandatory)]
         [ValidateScript({$_.EndsWith(';Fed=True')})]
@@ -44,10 +65,22 @@ function Export-AdxDatabaseSchema {
         $PolicyParser
     ) -join "`n"
 
+    $ContinuousExportQuery = @(
+        '.show continuous-exports'
+        '| extend CursorScopedTablesDynamic = parse_json(CursorScopedTables)'
+        '| extend CursorScopedTables0 = tostring(CursorScopedTablesDynamic[0])'
+        "| parse CursorScopedTables0 with * `"['`" Database0 `"'].['`" Table0 `"']`""
+        '| project-away'
+        '    CursorScopedTablesDynamic,'
+        '    CursorScopedTables0'
+        '| project-reorder *0'
+    ) -join "`n"
+
     $RlsPolicies = Invoke-AdxCmd -Query $RowLevelSecurityPoliciesQuery @Connection
     $UpdatePolicies = Invoke-AdxCmd -Query $UpdatePoliciesQuery @Connection
     $DatabasePolicy = Invoke-AdxCmd -Query '.show database policies' @Connection
     $TablesDetails = Invoke-AdxCmd -Query '.show tables details' @Connection
+    $ContinuousExports = $UpdatePolicies = Invoke-AdxCmd -Query $ContinuousExportQuery @Connection
 
     Invoke-AdxCmd -Query '.show database cslschema' @Connection | ForEach-Object {
         $Directory    = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
@@ -55,12 +88,17 @@ function Export-AdxDatabaseSchema {
         $TablePolicy  = $TablesDetails | Where-Object TableName -eq $TableName
         $UpdatePolicy = $UpdatePolicies | Where-Object TargetTable -eq $TableName
         $RlsPolicy    = $RlsPolicies | Where-Object TargetTable -eq $TableName
+        $ContinuousExport = $ContinuousExports | Where-Object {
+            $_.Database0 -eq $DatabaseName -and
+            $_.Table0 -eq $TableName
+        }
         $GetTableDdlSplat = @{
             CslSchemaDataRow = $_
             TablePolicy      = $TablePolicy
             DatabasePolicy   = $DatabasePolicy
             UpdatePolicy     = $UpdatePolicy
             RlsPolicy        = $RlsPolicy
+            ContinuousExport = $ContinuousExport
         }
         $CreateCmd = ConvertTo-AdxCreateTableCmd @GetTableDdlSplat
         $CreateCmd | Set-Content "${Directory}/${TableName}.kql"

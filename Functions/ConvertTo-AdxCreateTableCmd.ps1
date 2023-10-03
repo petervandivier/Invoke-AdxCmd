@@ -58,7 +58,14 @@ function ConvertTo-AdxCreateTableCmd {
         )]
         [Alias('RlsPolicy')]
         [AllowNull()]
-        $RowLevelSecurityPolicy
+        $RowLevelSecurityPolicy,
+
+        [Parameter(
+            Mandatory,
+            ParameterSetName='Policies'
+        )]
+        [AllowNull()]
+        $ContinuousExport
     )
     $createStub = ".create-merge table {TableName} (`n{ColumnList}`n) {WithClause}"
     $TableName = $CslSchemaDataRow.TableName | Format-KqlIdentifier
@@ -144,16 +151,71 @@ function ConvertTo-AdxCreateTableCmd {
 #endregion update
 
 #region row_level_security
-if($null -ne $RowLevelSecurityPolicy){
-    if($RowLevelSecurityPolicy.IsEnabled){
-        $RlsQuery = "$($RowLevelSecurityPolicy.Query)".Trim()
-        $RowLevelSecurityPolicyCmd = ".alter table $TableName policy row_level_security enable `"$RlsQuery`""
+        if($null -ne $RowLevelSecurityPolicy){
+            if($RowLevelSecurityPolicy.IsEnabled){
+                $RlsQuery = "$($RowLevelSecurityPolicy.Query)".Trim()
+                $RowLevelSecurityPolicyCmd = ".alter table $TableName policy row_level_security enable `"$RlsQuery`""
 
-        $createCmd += [Environment]::NewLine * 2
-        $createCmd += $RowLevelSecurityPolicyCmd
-    }
-}
+                $createCmd += [Environment]::NewLine * 2
+                $createCmd += $RowLevelSecurityPolicyCmd
+            }
+        }
 #endregion row_level_security
+
+#region continuous_export
+        if($null -ne $ContinuousExport){
+            <#
+                .Link
+                    https://learn.microsoft.com/en-us/azure/data-explorer/kusto/management/data-export/create-alter-continuous
+                .Link
+                    https://learn.microsoft.com/en-us/azure/data-explorer/kusto/management/data-export/show-continuous-export
+                .Link
+                    https://learn.microsoft.com/en-us/azure/data-explorer/kusto/management/data-export/continuous-export-with-managed-identity?tabs=user-assigned%2Cazure-storage#3---create-a-continuous-export-job
+            #>
+            # TODO: support managed identities (needs additional data not found in `.show continuous exports`)
+
+            # .CursorScopedTables is an array of identifier-quoted DB+Table names
+            # currently parsed in parent Export-* command control query
+            # TODO: are multiple tables even supported here?
+            # TODO: are cross-database references supported here?
+            $CursorScopedTable0 = $ContinuousExport.Table0 
+
+            $ContinuousExportWithClause = @()
+            if($ContinuousExport.ForcedLatency -ne [timespan]"00:00:00"){
+                $ContinuousExportWithClause += "    forcedLatency = $($ContinuousExport.ForcedLatency)"
+            }
+            if($ContinuousExport.IntervalBetweenRuns -ne [timespan]"00:00:00"){
+                $ContinuousExportWithClause += "    intervalBetweenRuns = `"$($ContinuousExport.IntervalBetweenRuns)`""
+            }
+
+            $ContinuousExportProperties = $ContinuousExport.ExportProperties | ConvertFrom-Json
+            if($ContinuousExportProperties.SizeLimit -ne 100mb){
+                $ContinuousExportWithClause += "    sizeLimit = $($ContinuousExportProperties.SizeLimit)"
+            }
+            if($ContinuousExportProperties.isDisabled){
+                $ContinuousExportWithClause += "    isDisabled = true"
+            }
+            # unsure what to do with these properties at this time
+            #     - WriteNativeParquetV2
+            #     - ParquetDatetimePrecision
+            #     - ReportDeltaLogResults
+
+            $ContinuousExportWithClause = $ContinuousExportWithClause -join ",`n"
+
+            $ContinuousExportCmd =  ".create continuous-export $($ContinuousExport.Name)`n"
+            $ContinuousExportCmd += "    over ($($CursorScopedTable0))`n"
+            $ContinuousExportCmd += "    to table $($ContinuousExport.ExternalTableName)`n"
+            if($null -ne $ContinuousExportWithClause){
+                $ContinuousExportCmd += "with (`n"
+                $ContinuousExportCmd += $ContinuousExportWithClause
+                $ContinuousExportCmd += "`n) "
+            }
+            $ContinuousExportCmd += "<| $($ContinuousExport.Query)"
+
+            $createCmd += [Environment]::NewLine * 2
+            $createCmd += $ContinuousExportCmd
+        }
+#endregion continuous_export
     }
 
     return $createCmd
