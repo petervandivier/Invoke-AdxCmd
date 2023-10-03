@@ -76,11 +76,19 @@ function Export-AdxDatabaseSchema {
         '| project-reorder *0'
     ) -join "`n"
 
+    $ExternalTablesQuery = @(
+        '.show external tables'
+        '| extend'
+        '    ConnectionStrings = dynamic_to_json(ConnectionStrings),'
+        '    Partitions = dynamic_to_json(Partitions)'
+    ) -join "`n"
+
     $RlsPolicies = Invoke-AdxCmd -Query $RowLevelSecurityPoliciesQuery @Connection
     $UpdatePolicies = Invoke-AdxCmd -Query $UpdatePoliciesQuery @Connection
     $DatabasePolicy = Invoke-AdxCmd -Query '.show database policies' @Connection
     $TablesDetails = Invoke-AdxCmd -Query '.show tables details' @Connection
-    $ContinuousExports = $UpdatePolicies = Invoke-AdxCmd -Query $ContinuousExportQuery @Connection
+    $ContinuousExports = Invoke-AdxCmd -Query $ContinuousExportQuery @Connection
+    $ExternalTables = Invoke-AdxCmd -Query $ExternalTablesQuery @Connection
 
     Invoke-AdxCmd -Query '.show database cslschema' @Connection | ForEach-Object {
         $Directory    = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
@@ -102,6 +110,16 @@ function Export-AdxDatabaseSchema {
         }
         $CreateCmd = ConvertTo-AdxCreateTableCmd @GetTableDdlSplat
         $CreateCmd | Set-Content "${Directory}/${TableName}.kql"
+    }
+
+    foreach($ExternalTable in $ExternalTables){
+        $TableName = $ExternalTable.TableName 
+        $ExternalTableSchema = Invoke-AdxCmd -Query ".show external table ['$TableName'] cslschema" @Connection
+        $Directory = New-Item -ItemType Directory -Path "ExternalTables/$($_.Folder)" -Force
+        ConvertTo-AdxCreateExternalTableCmd `
+            -CslSchemaDataRow $ExternalTableSchema `
+            -ExternalTableDataRow $ExternalTable `
+        | Set-Content "$Directory/${TableName}.kql"
     }
 
     Invoke-AdxCmd -Query '.show functions' @Connection | ForEach-Object {
