@@ -1,7 +1,7 @@
 
 <#
 .SYNOPSIS
-    Output of `..show database cslschema` or `.show table <TableName> cslschema` command
+    Output of `.show database cslschema` or `.show table <TableName> cslschema` command
 .LINK
     https://learn.microsoft.com/en-us/azure/data-explorer/kusto/management/show-table-schema-command
 .LINK
