@@ -18,6 +18,9 @@
         'New-KqlWithClause'
         'Test-KqlKeyword'
     )
+    AliasesToExport = @(
+        'adxdump'
+    )
     VariablesToExport = @(
         'KqlReservedKeywords'
     )

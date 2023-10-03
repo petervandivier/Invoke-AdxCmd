@@ -16,7 +16,12 @@ Export-ModuleMember 'Invoke-AdxCmd'
 
 Get-ChildItem Functions -Filter *.ps1 | ForEach-Object {
     . $_.FullName
-    Export-ModuleMember $_.BaseName
+    if($_.BaseName -eq 'Export-AdxDatabaseSchema'){
+        New-Alias -Name 'adxdump' -Value 'Export-AdxDatabaseSchema'
+        Export-ModuleMember $_.BaseName -Alias 'adxdump'
+    } else {
+        Export-ModuleMember $_.BaseName
+    }
 }
 
 Import-Csv "Assets/KqlKeywords.csv"
