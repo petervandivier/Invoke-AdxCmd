@@ -43,18 +43,25 @@ function ConvertTo-AdxCreateExternalTableCmd {
         $CreateTableCmd += "`n{ExternalTablePlaceholder}"
     }
 
-    $PartitionByClause = $ExternalTableDataRow.Partitions.Name
-    $PartitionByClause += ":datetime = "
-    $PartitionByClause += "$($ExternalTableDataRow.Partitions.Function)".ToLower()
-    $PartitionByClause += "($($ExternalTableDataRow.Partitions.ColumnName))"
+    $PartitionByClause = ""
+    if(0 -lt $ExternalTableDataRow.Partitions.Count){
+        $PartitionByClause += $ExternalTableDataRow.Partitions.Name
+        $PartitionByClause += ":datetime = "
+        $PartitionByClause += "$($ExternalTableDataRow.Partitions.Function)".ToLower()
+        $PartitionByClause += "($($ExternalTableDataRow.Partitions.ColumnName))"
+    }
 
     $ExternalTableDetails = ""
     $ExternalTableDetails += "kind = $($ExternalTableDataRow.TableType)`n"
-    $ExternalTableDetails += "partition by ($PartitionByClause)`n"
-    $ExternalTableDetails += "kind = $($ExternalTableDataRow.TableType)`n"
+    if(-not [string]::IsNullOrWhiteSpace($PartitionByClause)){
+        $ExternalTableDetails += "partition by ($PartitionByClause)`n"
+    }
+    if(-not [string]::IsNullOrWhiteSpace($ExternalTableDataRow.PathFormat)){
+        $ExternalTableDetails += "pathformat = $($ExternalTableDataRow.PathFormat)`n"
+    }
     $ExternalTableDetails += "dataformat = $($ExternalTableDataRow.Properties.Format.ToLower())`n"
     $ExternalTableDetails += "(`n"
-    $ExternalTableDetails += "    h@'$($ExternalTableDataRow.ConnectionStrings)'"
+    $ExternalTableDetails += "    h@'$($ExternalTableDataRow.ConnectionStrings)'`n"
     $ExternalTableDetails += ")`n"
 
     $CreateTableCmd = $CreateTableCmd.Replace(

@@ -23,9 +23,9 @@ class AdxExternalTableDataRow {
     [string]$Folder
     [string]$DocString
     [ValidateNotNullOrEmpty()]$Properties
-    [ValidateNotNullOrEmpty()]$ConnectionStrings
+    [ValidateNotNullOrEmpty()][string[]]$ConnectionStrings
     $Partitions
-    [ValidateNotNullOrEmpty()][string]$PathFormat
+    [string]$PathFormat
     [string]$Catalog
     AdxExternalTableDataRow([System.Data.DataRowView]$DataRow){
         $this.TableName         = $DataRow.TableName
