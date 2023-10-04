@@ -64,7 +64,7 @@ function ConvertTo-AdxCreateExternalTableCmd {
     $ExternalTableDetails += "dataformat = $($ExternalTableDataRow.Properties.Format.ToLower())`n"
     $ExternalTableDetails += "(`n"
     $ExternalTableDetails += "    h@'$($ExternalTableDataRow.ConnectionStrings)'`n"
-    $ExternalTableDetails += ")`n"
+    $ExternalTableDetails += ")"
 
     $CreateTableCmd = $CreateTableCmd.Replace(
         '{ExternalTablePlaceholder}',
@@ -78,7 +78,7 @@ function ConvertTo-AdxCreateExternalTableCmd {
                 "with (`n    compressed = true,"
             )
         } else {
-            $CreateTableCmd += "with ( compressed = true )"
+            $CreateTableCmd += "`nwith ( compressed = true )"
         }
     }
 
