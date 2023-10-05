@@ -115,7 +115,7 @@ function Export-AdxDatabaseSchema {
     foreach($ExternalTable in $ExternalTables){
         $TableName = $ExternalTable.TableName 
         $ExternalTableSchema = Invoke-AdxCmd -Query ".show external table ['$TableName'] cslschema" @Connection
-        $Directory = New-Item -ItemType Directory -Path "ExternalTables/$($_.Folder)" -Force
+        $Directory = New-Item -ItemType Directory -Path "ExternalTables/$($ExternalTable.Folder)" -Force
         ConvertTo-AdxCreateExternalTableCmd `
             -CslSchemaDataRow $ExternalTableSchema `
             -ExternalTableDataRow $ExternalTable `
