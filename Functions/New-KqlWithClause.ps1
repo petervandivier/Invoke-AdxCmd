@@ -9,10 +9,18 @@ function New-KqlWithClause {
         $Lookback
     )
     if($Folder){
-        $Folder = "folder = '$Folder'"
+        if($Folder.Contains("\")){
+            $Folder = "folder = @'$Folder'"
+        } else {
+            $Folder = "folder = '$Folder'"
+        }
     }
     if($DocString){
-        $DocString = "docstring = '$($DocString.Replace("'","''"))'"
+        if($DocString.Contains("\")){
+            $DocString = "docstring = @'$($DocString.Replace("'","''"))'"
+        } else {
+            $DocString = "docstring = '$($DocString.Replace("'","''"))'"
+        }
     }
     if($Lookback){
         $Lookback = "lookback = time($($Lookback.ToString()))"
