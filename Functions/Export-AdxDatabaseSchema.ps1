@@ -65,6 +65,15 @@ function Export-AdxDatabaseSchema {
         $PolicyParser
     ) -join "`n"
 
+    $PartitioningPolicyQuery = @(
+        '.show table * policy partitioning'
+        '| extend EntityName = split(EntityName,@".")'
+        '| extend'
+        '    DatabaseName = trim(@"[^\w]+",tostring(EntityName[0])),'
+        '    TableName = trim(@"[^\w]+",tostring(EntityName[1]))'
+        '| project-away EntityName'
+    ) -join "`n"
+
     $ContinuousExportQuery = @(
         '.show continuous-exports'
         '| extend CursorScopedTablesDynamic = parse_json(CursorScopedTables)'
@@ -84,6 +93,7 @@ function Export-AdxDatabaseSchema {
     ) -join "`n"
 
     $RlsPolicies = Invoke-AdxCmd -Query $RowLevelSecurityPoliciesQuery @Connection
+    $PartitionPolicies = Invoke-AdxCmd -Query $PartitioningPolicyQuery @Connection
     $UpdatePolicies = Invoke-AdxCmd -Query $UpdatePoliciesQuery @Connection
     $DatabasePolicy = Invoke-AdxCmd -Query '.show database policies' @Connection
     $TablesDetails = Invoke-AdxCmd -Query '.show tables details' @Connection
@@ -91,14 +101,18 @@ function Export-AdxDatabaseSchema {
     $ExternalTables = Invoke-AdxCmd -Query $ExternalTablesQuery @Connection
 
     Invoke-AdxCmd -Query '.show database cslschema' @Connection | ForEach-Object {
-        $Directory    = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
-        $TableName    = $_.TableName
-        $TablePolicy  = $TablesDetails | Where-Object TableName -eq $TableName
-        $UpdatePolicy = $UpdatePolicies | Where-Object TargetTable -eq $TableName
-        $RlsPolicy    = $RlsPolicies | Where-Object TargetTable -eq $TableName
+        $Directory        = New-Item -ItemType Directory -Path "Tables/$($_.Folder)" -Force
+        $TableName        = $_.TableName
+        $TablePolicy      = $TablesDetails     | Where-Object TableName   -eq $TableName
+        $UpdatePolicy     = $UpdatePolicies    | Where-Object TargetTable -eq $TableName
+        $RlsPolicy        = $RlsPolicies       | Where-Object TargetTable -eq $TableName
+        $PartitionPolicy  = $PartitionPolicies | Where-Object {
+            $_.DatabaseName -eq $DatabaseName -and
+            $_.TableName    -eq $TableName
+        }
         $ContinuousExport = $ContinuousExports | Where-Object {
             $_.Database0 -eq $DatabaseName -and
-            $_.Table0 -eq $TableName
+            $_.Table0    -eq $TableName
         }
         $GetTableDdlSplat = @{
             CslSchemaDataRow = $_
@@ -106,6 +120,7 @@ function Export-AdxDatabaseSchema {
             DatabasePolicy   = $DatabasePolicy
             UpdatePolicy     = $UpdatePolicy
             RlsPolicy        = $RlsPolicy
+            PartitionPolicy  = $PartitionPolicy
             ContinuousExport = $ContinuousExport
         }
         $CreateCmd = ConvertTo-AdxCreateTableCmd @GetTableDdlSplat
