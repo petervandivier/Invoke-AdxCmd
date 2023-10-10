@@ -65,6 +65,13 @@ function ConvertTo-AdxCreateTableCmd {
             ParameterSetName='Policies'
         )]
         [AllowNull()]
+        $PartitionPolicy,
+
+        [Parameter(
+            Mandatory,
+            ParameterSetName='Policies'
+        )]
+        [AllowNull()]
         $ContinuousExport
     )
     $createStub = ".create-merge table {TableName} (`n{ColumnList}`n) {WithClause}"
@@ -161,6 +168,27 @@ function ConvertTo-AdxCreateTableCmd {
             }
         }
 #endregion row_level_security
+
+#region partition_policy
+if($null -ne $PartitionPolicy){
+    $PartitionPolicyObject = ($PartitionPolicy.Policy | ConvertFrom-Json) | Select-Object PartitionKeys
+    if(1 -eq $PartitionPolicyObject.PartitionKeys.Properties.Seed){
+        $PartitionPolicyObject.PartitionKeys.Properties.PSObject.Properties.Remove('Seed')
+    }
+    if("Default" -eq $PartitionPolicyObject.PartitionKeys.Properties.PartitionAssignmentMode){
+        $PartitionPolicyObject.PartitionKeys.Properties.PSObject.Properties.Remove('PartitionAssignmentMode')
+    }
+    $PartitionDefinition = @(
+        '```'
+        $PartitionPolicyObject | ConvertTo-Json -Depth 3
+        '```'
+    ) -join "`n"
+    $RowLevelSecurityPolicyCmd = ".alter table $TableName policy partitioning`n$PartitionDefinition"
+
+    $createCmd += [Environment]::NewLine * 2
+    $createCmd += $RowLevelSecurityPolicyCmd
+}
+#endregion partition_policy
 
 #region continuous_export
         if($null -ne $ContinuousExport){
