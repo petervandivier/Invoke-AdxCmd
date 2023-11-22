@@ -230,7 +230,7 @@ if($null -ne $PartitionPolicy){
 
             $ContinuousExportWithClause = $ContinuousExportWithClause -join ",`n"
 
-            $ContinuousExportCmd =  ".create continuous-export $($ContinuousExport.Name)`n"
+            $ContinuousExportCmd =  ".create-or-alter continuous-export $($ContinuousExport.Name)`n"
             $ContinuousExportCmd += "    over ($($CursorScopedTable0))`n"
             $ContinuousExportCmd += "    to table $($ContinuousExport.ExternalTableName)`n"
             if($null -ne $ContinuousExportWithClause){
