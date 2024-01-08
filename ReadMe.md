@@ -1,6 +1,10 @@
 # Invoke-AdxCmd
 
-Started as a lightweight PowerShell wrapper to connect to Azure Data Explorer and execute arbitrary KQL. Currently growing to include utility functions for interacting with an ADX cluster.
+Once upon a time, I asked StackOverflow ["How to query ADX from PowerShell?"](https://stackoverflow.com/q/75315624/4709762). To support that use case, I created this module.
+
+Started as a lightweight PowerShell wrapper to connect to Azure Data Explorer and execute arbitrary KQL. Grown to include utility functions for interacting with an ADX cluster.
+
+# Arcana
 
 If you're on this page, you probably already know what KQL & ADX are, but so we're all on the same page as to the module author's understanding...
 
